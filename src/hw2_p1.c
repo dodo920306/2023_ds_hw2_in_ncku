@@ -252,17 +252,17 @@ int main(int argc, char* argv[])
             break;
         }
         else if (!strncmp(op, "insert", 6)) {
-            scanf("%d %d", &key, &val);
+            if (scanf("%d %d", &key, &val) != 2) return 2;
             insert(key, val);
         }
         else if (!strncmp(op, "delete", 6)) {
-            scanf("%d %d", &key, &val);
+            if (scanf("%d %d", &key, &val) != 2) return 2;
             struct Node *temp = find(mini, key, val);
             if (temp)
                 delete(temp);
         }
         else if (!strncmp(op, "decrease", 8)) {
-            scanf("%d %d %d", &key, &val, &delta);
+            if (scanf("%d %d %d", &key, &val, &delta) != 3) return 3;
             struct Node *temp = find(mini, key, val);
             if (temp)
                 decrease_key(temp, delta);
