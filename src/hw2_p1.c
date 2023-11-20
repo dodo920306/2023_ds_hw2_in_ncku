@@ -15,9 +15,14 @@ struct Node {
 };
 
 void insertion(int key, int val);
-void extract();
 void link(struct Node *small, struct Node *big);
 void consolidate();
+void extract();
+struct Node *find(struct Node *mini, int key, int val);
+void cut(struct Node *pntr);
+void cascading_cut(struct Node *pntr);
+void decrease_key(struct Node *pntr, int delta);
+void delete(struct Node *pntr);
 
 struct Node *mini = NULL;
 
