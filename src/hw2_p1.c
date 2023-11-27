@@ -14,21 +14,23 @@ struct Node {
     struct Node *parent; /* Added when decreasing key */
 };
 
-void insertion(int key, int val);
+struct FHeap {
+    struct Node *mini;
+    int no_of_nodes;
+};
+
+void insertion(struct FHeap *fheap, int key, int val);
 void link(struct Node *small, struct Node *big);
-void consolidate();
-void extract();
+void consolidate(struct FHeap *fheap);
+void extract(struct FHeap *fheap);
 struct Node *find(struct Node *mini, int key, int val);
-void cut(struct Node *pntr);
-void cascading_cut(struct Node *pntr);
-void decrease_key(struct Node *pntr, int delta);
-void delete(struct Node *pntr);
+void cut(struct FHeap *fheap, struct Node *pntr);
+void cascading_cut(struct FHeap *fheap, struct Node *pntr);
+void decrease_key(struct FHeap *fheap, struct Node *pntr, int delta);
+void delete(struct FHeap *fheap, struct Node *pntr);
 
-struct Node *mini = NULL;
 
-int no_of_nodes = 0;
-
-void insert(int key, int val)
+void insert(struct FHeap *fheap, int key, int val)
 {
     struct Node *new_node = (struct Node *)malloc(sizeof(struct Node));
     new_node->key = key;
@@ -39,19 +41,19 @@ void insert(int key, int val)
     new_node->right = new_node;    /* Form a single node doubly linked list first. */
     new_node->child = NULL;
     new_node->parent = NULL;
-    if (mini) {
-        (mini->left)->right = new_node;    /* Insert the new node as the left of the mini node. */
-        new_node->right = mini;
-        new_node->left = mini->left;
-        mini->left = new_node;
-        if (new_node->key < mini->key)
-            mini = new_node; /* Update the minimum. */
+    if (fheap->mini) {
+        (fheap->mini->left)->right = new_node;    /* Insert the new node as the left of the mini node. */
+        new_node->right = fheap->mini;
+        new_node->left = fheap->mini->left;
+        fheap->mini->left = new_node;
+        if (new_node->key < fheap->mini->key)
+            fheap->mini = new_node; /* Update the minimum. */
     }
     else {
-        mini = new_node;
+        fheap->mini = new_node;
     }
 
-    no_of_nodes++;
+    fheap->no_of_nodes++;
 }
 
 void link(struct Node *small, struct Node *big)
@@ -76,16 +78,16 @@ void link(struct Node *small, struct Node *big)
     small->degree++;
 }
 
-void consolidate()
+void consolidate(struct FHeap *fheap)
 {
-    int length = 0, x = no_of_nodes;
+    int length = 0, x = fheap->no_of_nodes;
     /* log2 */
     while (x > 1) {
         x /= 2;
         length++;
     }
     length++; /* Just for sure. */
-    struct Node *pntr = mini, *temp = mini;
+    struct Node *pntr = fheap->mini, *temp = fheap->mini;
     struct Node ** degrees = (struct Node **)malloc(length * sizeof(struct Node *));
     for (int i = 0; i < length; i++)
         degrees[i] = NULL;
@@ -105,63 +107,63 @@ void consolidate()
         temp->right = temp;
         degrees[temp->degree] = temp;
         temp = pntr;
-    } while (pntr != mini);
+    } while (pntr != fheap->mini);
 
     /* Find new mini */
     int i = 0;
     while (!degrees[i]) i++;
-    mini = degrees[i];
+    fheap->mini = degrees[i];
     for (; i < length; i++) {
         /* rebuild the connection */
         if (degrees[i]) {
             /* Insert */
-            degrees[i]->right = mini;
-            degrees[i]->left = mini->left;
-            mini->left->right = degrees[i];
-            mini->left = degrees[i];
-            mini = degrees[i]->key < mini->key ? degrees[i] : mini;
+            degrees[i]->right = fheap->mini;
+            degrees[i]->left = fheap->mini->left;
+            fheap->mini->left->right = degrees[i];
+            fheap->mini->left = degrees[i];
+            fheap->mini = degrees[i]->key < fheap->mini->key ? degrees[i] : fheap->mini;
         }
     }
     free(degrees);
 }
 
-void extract()
+void extract(struct FHeap *fheap)
 {
-    if (no_of_nodes) {
-        printf("(%d)%d\n", mini->key, mini->val);
-        if (no_of_nodes == 1) {
+    if (fheap->no_of_nodes) {
+        printf("(%d)%d\n", fheap->mini->key, fheap->mini->val);
+        if (fheap->no_of_nodes == 1) {
             /* Only one node in the list and it's mini, and it has no child. */
-            free(mini);
-            mini = NULL;
+            free(fheap->mini);
+            fheap->mini = NULL;
             /* Back to no node. */
         }
         else {
-            struct Node *pntr = NULL, *temp = mini;
-            if (mini->child) {
+            struct Node *pntr = NULL, *temp = fheap->mini;
+            if (fheap->mini->child) {
                 /* temp is children iterator of mini's children. */
-                temp = mini->child;
+                temp = fheap->mini->child;
                 do {
                     /* pntr is the position of the next child to be deleted. */
                     pntr = temp->right;
                     /* insert temp */
-                    (mini->left)->right = temp;    /* Insert the child as the left of the mini node. */
-                    temp->right = mini;
-                    temp->left = mini->left;
-                    mini->left = temp;
+                    (fheap->mini->left)->right = temp;    /* Insert the child as the left of the mini node. */
+                    temp->right = fheap->mini;
+                    temp->left = fheap->mini->left;
+                    fheap->mini->left = temp;
                     /* Update the temp. */
                     temp = pntr;
-                } while (pntr != mini->child); /* Back to the beginning (mini->child). */
+                } while (pntr != fheap->mini->child); /* Back to the beginning (mini->child). */
             }
             /* mini won't alter by the insertion since it's a min heap. */
             /* Delete mini */
-            (mini->left)->right = mini->right;
-            (mini->right)->left = mini->left;
-            free(mini);
+            (fheap->mini->left)->right = fheap->mini->right;
+            (fheap->mini->right)->left = fheap->mini->left;
+            free(fheap->mini);
             /* Move mini to right to be the start point of consolidation. */
-            mini = temp->right;
-            consolidate();
+            fheap->mini = temp->right;
+            consolidate(fheap);
         }
-        no_of_nodes--;
+        fheap->no_of_nodes--;
     }
 }
 
@@ -181,7 +183,7 @@ struct Node *find(struct Node *mini, int key, int val)
     return temp;
 }
 
-void cut(struct Node *pntr)
+void cut(struct FHeap *fheap, struct Node *pntr)
 {
     if (pntr->parent->degree-- == 1)
         pntr->parent->child = NULL;
@@ -190,15 +192,15 @@ void cut(struct Node *pntr)
         pntr->left->right = pntr->right;
         pntr->parent->child = pntr->right;
     }
-    pntr->left = mini->left;
-    pntr->right = mini;
-    mini->left->right = pntr;
-    mini->left = pntr;
+    pntr->left = fheap->mini->left;
+    pntr->right = fheap->mini;
+    fheap->mini->left->right = pntr;
+    fheap->mini->left = pntr;
     pntr->mark = false;
     pntr->parent = NULL;
 }
 
-void cascading_cut(struct Node *pntr)
+void cascading_cut(struct FHeap *fheap, struct Node *pntr)
 {
     while (pntr->parent) {
         if (!pntr->mark) {
@@ -206,39 +208,39 @@ void cascading_cut(struct Node *pntr)
             break;
         }
         else {
-            cut(pntr);
+            cut(fheap, pntr);
         }
         pntr = pntr->parent;
     }
 }
 
-void decrease_key(struct Node *pntr, int delta)
+void decrease_key(struct FHeap *fheap, struct Node *pntr, int delta)
 {
     struct Node *temp = pntr->parent;
     pntr->key -= delta;
     if (temp && pntr->key < temp->key) {
-        cut(pntr);
-        cascading_cut(temp);
+        cut(fheap, pntr);
+        cascading_cut(fheap, temp);
     }
-    if (pntr->key < mini->key)
-        mini = pntr;
+    if (pntr->key < fheap->mini->key)
+        fheap->mini = pntr;
 }
 
-void delete(struct Node *pntr)
+void delete(struct FHeap *fheap, struct Node *pntr)
 {
     struct Node *temp = pntr->parent;
     if (temp) {
-        cut(pntr);
-        cascading_cut(temp);
+        cut(fheap, pntr);
+        cascading_cut(fheap, temp);
     }
     (pntr->left)->right = pntr->right;
     (pntr->right)->left = pntr->left;
-    no_of_nodes--;
-    if (mini == pntr) {
-        mini = pntr->right;
-        struct Node *temp = mini->right;
-        while  (temp != mini) {
-            mini = temp->key < mini->key ? temp : mini;
+    fheap->no_of_nodes--;
+    if (fheap->mini == pntr) {
+        fheap->mini = pntr->right;
+        struct Node *temp = fheap->mini->right;
+        while  (temp != fheap->mini) {
+            fheap->mini = temp->key < fheap->mini->key ? temp : fheap->mini;
             temp = temp->right;
         }
     }
@@ -247,6 +249,7 @@ void delete(struct Node *pntr)
 
 int main(int argc, char* argv[])
 {
+    struct FHeap fheap = {NULL, 0};
     char *op;
     int key, val, delta;
     op = malloc(8 * sizeof(char));
@@ -258,22 +261,22 @@ int main(int argc, char* argv[])
         }
         else if (!strncmp(op, "insert", 6)) {
             if (scanf("%d %d", &key, &val) != 2) return 2;
-            insert(key, val);
+            insert(&fheap, key, val);
         }
         else if (!strncmp(op, "delete", 6)) {
             if (scanf("%d %d", &key, &val) != 2) return 2;
-            struct Node *temp = find(mini, key, val);
+            struct Node *temp = find(fheap.mini, key, val);
             if (temp)
-                delete(temp);
+                delete(&fheap, temp);
         }
         else if (!strncmp(op, "decrease", 8)) {
             if (scanf("%d %d %d", &key, &val, &delta) != 3) return 3;
-            struct Node *temp = find(mini, key, val);
+            struct Node *temp = find(fheap.mini, key, val);
             if (temp)
-                decrease_key(temp, delta);
+                decrease_key(&fheap, temp, delta);
         }
         else if (!strncmp(op, "extract", 7)) {
-            extract();
+            extract(&fheap);
         }
     }
     return 0;
