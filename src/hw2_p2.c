@@ -21,13 +21,19 @@ struct RBTree {
 void insertFixup(struct RBTree *tree, struct Node *z);
 void insert(struct RBTree *tree, int key);
 
-void insert(struct RBTree *tree, int key) {
+void insertFixup(struct RBTree *tree, struct Node *z)
+{
+    ; /* TBD */
+}
+
+void insert(struct RBTree *tree, int key)
+{
     struct Node *z = (struct Node *)malloc(sizeof(struct Node)), *y = tree->nil, *x = tree->root;
     z->key = key;
     z->color = RED;
     z->parent = NULL;
-    z->left = tree->nil
-    z->right = tree->nil
+    z->left = tree->nil;
+    z->right = tree->nil;
 
     while (x != tree->nil) {
         y = x;
@@ -41,7 +47,7 @@ void insert(struct RBTree *tree, int key) {
 
     z->parent = y;
     if (y == tree->nil) {
-        tree->root = z; // Tree was empty
+        tree->root = z; /* Tree was empty */
     }
     else if (z->key < y->key) {
         y->left = z;
