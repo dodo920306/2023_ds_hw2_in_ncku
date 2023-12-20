@@ -315,7 +315,6 @@ int main(int argc, char* argv[])
             insert(&rbtree, key);
         }
         else if (!strncmp(op, "delete", 6)) {
-            printf("%s\n", op);
             if (scanf("%d", &key) != 1) return 1;
             delete(&rbtree, key);
         }
