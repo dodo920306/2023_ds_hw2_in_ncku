@@ -259,7 +259,7 @@ void delete(struct RBTree *tree, int key)
             /* x->right != tree->nil, so y must be the leftmost of x's right subtree. */
             /* If x has two child, overwrite x with its leftmost node in its right subtree, and delete it. */
             y = x->right;
-            while (y->left != NULL) {
+            while (y->left != tree->nil) {
                 y = y->left;
             }
         }
